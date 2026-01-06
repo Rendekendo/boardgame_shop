@@ -62,10 +62,6 @@ def login(db):
     member_menu(email, password)
 
 
-def log_out():
-    pass
-
-
 def register(db):
     while True:
         first_name = input('Enter first name: ')
@@ -163,7 +159,6 @@ def member_menu(email, password):
             case '4':
                 pass
             case '5':
-                log_out()
                 break
 
 

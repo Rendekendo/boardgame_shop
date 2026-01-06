@@ -59,7 +59,7 @@ class Database:
         self.cursor.execute(sql, [input_email])
         data = self.cursor.fetchall()
 
-        if data == []:
+        if data == []:  # email not in database yet
             return True
         else:
             return False
