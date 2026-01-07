@@ -43,13 +43,15 @@ class Database:
         self.connection.commit()
         print(self.cursor.rowcount, 'record inserted')
 
-    def login(self, email, password):
+    def login(self, input_email, input_pwd):
         sql = 'SELECT email, pwd_hash FROM users WHERE email = %s'
-        val = [email]
+        val = [input_email]
         self.cursor.execute(sql, val)
         result = self.cursor.fetchall()
+        email, pwd = result[0]
+        print(email, pwd)
 
-        if [(email, password)] == result:
+        if (input_email, input_pwd) == (email, pwd):
             return True
         else:
             return False
@@ -63,3 +65,10 @@ class Database:
             return True
         else:
             return False
+
+    def get_id(self, email):
+        sql = 'SELECT user_id FROM users WHERE email = %s'
+        self.cursor.execute(sql, [email])
+        data = self.cursor.fetchall()
+
+        return data[0][0]

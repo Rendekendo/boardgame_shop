@@ -43,6 +43,7 @@ def login(db):
         while True:
             email = input('Enter Email: ')
             if is_valid_email(email):
+                email = email.lower()
                 break
             else:
                 print('Invalid Input')
@@ -59,7 +60,7 @@ def login(db):
         else:
             print('Invalid Credentials, try again')
 
-    member_menu(email, password)
+    member_menu(db, email)
 
 
 def register(db):
@@ -106,6 +107,7 @@ def register(db):
         email = input('Enter email: ')
         if is_valid_email(email) and db.check_unique_email(email):
             if len(first_name) <= 80:
+                email = email.lower()
                 break
         else:
             print('Invalid email, try again \n')
@@ -127,10 +129,12 @@ def register(db):
                 email,
                 password)
 
-    member_menu(email, password)
+    member_menu(db, email)
 
 
-def member_menu(email, password):
+def member_menu(db, email):
+    user_id = db.get_id(email)
+
     while True:
         print("""
     ********************************************
@@ -142,7 +146,7 @@ def member_menu(email, password):
     4) Checkout
     5) Log out
             """)
-        print('welcome user', email)
+        print('welcome user', email, user_id)
 
         choice = input('Type in your choice: ')
         valid_input = ['1', '2', '3', '4', '5']
