@@ -2,6 +2,7 @@ from getpass import getpass
 from database import Database
 from mysql.connector import connect
 import hashlib
+from decimal import Decimal
 import re
 
 
@@ -34,6 +35,85 @@ def hash_pwd(string):
     hash_object = hashlib.sha256(string.encode())
     hex_digest = hash_object.hexdigest()
     return hex_digest
+
+
+def search_games(db, user_id):
+    while True:
+        print("""
+    == Search ==
+    1) by designer (starts with)
+    2) by title (whole word)
+    3) back to main menu
+            """)
+
+        choice = input('Type in your choice: ')
+        valid_input = ['1', '2', '3']
+        if choice not in valid_input or choice == '':
+            print('invalid input try again')
+
+        match choice:
+            case '1':
+                while True:
+                    query = input('Designer starts with: ')
+                    if query != '':
+                        break
+                    else:
+                        print('input mustn\'t be empty')
+                search(db, user_id, 'designer', query)
+            case '2':
+                while True:
+                    query = input('Title word: ')
+                    if query != '':
+                        break
+                    else:
+                        print('input mustn\'t be empty')
+                search(db, user_id, 'title', query)
+            case '3':
+                return
+
+
+def search(db, user_id, search_type, query):
+    offset = 0
+    while True:
+        result, count = db.search(query, offset, search_type)
+        if result:
+            print_result = format_db_return(result)
+            x = '== Results(showing'
+            print(x, f'{offset + 1} - {offset + 3} of {count}) ==')
+            for game in print_result:
+                print(game)
+        else:
+            print(f'No games found with {search_type}: {query}')
+            return
+
+        print('\nOptions: enter Game ID to add to cart,'
+              ' \'n\' for next, ENTER to return.\n')
+
+        choice = input('> ')
+        if choice == 'n':
+            if count > offset + 3:
+                offset += 3
+            else:
+                print('No more results')
+        elif choice == '':
+            return
+        else:
+            valid_input = [result[x][0] for x in range(len(result))]
+            if choice not in valid_input:
+                print('invalid input try again')
+            else:
+                quantity = input('Quantity: ')
+                db.add_to_cart(user_id, choice, quantity)
+
+
+def format_db_return(lst):
+    result = []
+    for game_id, title, designer, unit_price in lst:
+        price = str(unit_price)
+
+        result.append(f'ID {game_id}: {title} by {designer} ${price}')
+
+    return result
 
 
 def login(db):
@@ -157,7 +237,7 @@ def member_menu(db, email):
             case '1':
                 pass
             case '2':
-                pass
+                search_games(db, user_id)
             case '3':
                 pass
             case '4':
