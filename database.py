@@ -10,13 +10,6 @@ class Database:
                                   database="boardgame_shop")
         self.cursor = self.connection.cursor()
 
-    def readAll(self):
-        self.cursor.execute("SELECT * FROM boardgame_shop.games")
-        myresult = self.cursor.fetchall()
-
-        for x in myresult:
-            print(x)
-
     def register(self,
                  first_name,
                  last_name,
