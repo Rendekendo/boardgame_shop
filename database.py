@@ -64,3 +64,12 @@ class Database:
         data = self.cursor.fetchall()
 
         return data[0][0]
+
+    def add_to_cart(self, user_id, game_id, quantity):
+        sql = 'INSERT INTO cart (user_id, game_id, quantity)' \
+              ' VALUES (%s, %s, %s)'
+        val = (user_id, game_id, quantity)
+        self.cursor.execute(sql, val)
+
+        self.connection.commit()
+        print(self.cursor.rowcount, 'record inserted')
