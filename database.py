@@ -49,7 +49,6 @@ class Database:
         self.cursor.execute(sql, val)
         result = self.cursor.fetchall()
         email, pwd = result[0]
-        print(email, pwd)
 
         if (input_email, input_pwd) == (email, pwd):
             return True
