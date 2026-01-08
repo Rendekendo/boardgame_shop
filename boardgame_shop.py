@@ -49,7 +49,7 @@ def login(db):
                 print('Invalid Input')
 
         while True:
-            password = hash_pwd(getpass('Enter Password: '))
+            password = hash_pwd(getpass('Enter Password (hidden): '))
             if password != '':
                 break
             else:
@@ -155,7 +155,7 @@ def member_menu(db, email):
 
         match choice:
             case '1':
-                pass
+                init_browse_by_genre(db, user_id, email)
             case '2':
                 pass
             case '3':
@@ -166,14 +166,164 @@ def member_menu(db, email):
                 break
 
 
+def init_browse_by_genre(db, user_id, email):
+    strng = """
+== GENRES ==
+1)  Abstract
+2)  Cooperative
+3)  Deck-Building
+4)  Expansion
+5)  Family
+6)  Party
+7)  Strategy
+8)  Thematic
+9)  Wargame
+10) Worker Placement
+"""
+    print(strng)
+    choice = input('Pick a number (or ENTER to return):')
+    match choice:
+        case '1':
+            genre = 'Abstract'
+        case '2':
+            genre = 'Cooperative'
+        case '3':
+            genre = 'Deck-Building'
+        case '4':
+            genre = 'Expansion'
+        case '5':
+            genre = 'Family'
+        case '6':
+            genre = 'Party'
+        case '7':
+            genre = 'Strategy'
+        case '8':
+            genre = 'Thematic'
+        case '9':
+            genre = 'Wargame'
+        case '10':
+            genre = 'Worker Placement'
+        case _:
+            print('Invalid input. Please enter a number between 1 and 10.')
+            valid_nr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+            while choice not in valid_nr:
+                choice = input('Enter your choice: ')
+                match choice:
+                    case '1':
+                        genre = 'Abstract'
+                    case '2':
+                        genre = 'Cooperative'
+                    case '3':
+                        genre = 'Deck-Building'
+                    case '4':
+                        genre = 'Expansion'
+                    case '5':
+                        genre = 'Family'
+                    case '6':
+                        genre = 'Party'
+                    case '7':
+                        genre = 'Strategy'
+                    case '8':
+                        genre = 'Thematic'
+                    case '9':
+                        genre = 'Wargame'
+                    case '10':
+                        genre = 'Worker Placement'
+
+    browse_by_genre(db, user_id, email, genre)
+
+
+def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
+    print('------------------------------------'
+          '------------------------------------')
+    # -- get data for pages --
+    game_sql = 'SELECT COUNT(*) FROM boardgame_shop.games WHERE genre = %s'
+    game_val = [genre]
+    db.cursor.execute(game_sql, game_val)
+    sum_of_games = db.cursor.fetchone()
+    page += 1
+    if page < sum_of_games[0]:
+        print(f'== {genre}: showing page {page}-{page+1} of {sum_of_games[0]} ==')
+    elif page <= sum_of_games[0]:
+        print(f'== {genre}: showing page {page} of {sum_of_games[0]} ==')
+    else:
+        print('All available games have been displayed. '
+              'Returning to chosing the genre.')
+        init_browse_by_genre(db, user_id, email)
+    page += 1
+
+    # -- get actual game data --
+    sql = """
+    SELECT g.game_id, g.title, g.unit_price
+    FROM boardgame_shop.games AS g
+    WHERE g.genre = %s
+    LIMIT 2 OFFSET %s;
+    """
+    # sec(ond)_game_nr: which number to use with OFFSET in query
+    val = [genre, sec_game_nr]
+    db.cursor.execute(sql, val)
+    rows = db.cursor.fetchmany(2)
+    for tuples in rows:
+        str_of_elements = ''
+        for element in tuples:
+            element = str(element)
+            str_of_elements += element + ' '
+        print(str_of_elements)
+    # first two elements have been printed, now user choses what happens
+
+    answer = input("Enter GameID to add to cart, 'n' "
+                   "to see next games or ENTER to return. ")
+
+    # user chose to add game to cart
+    if answer[:2] == 'BG':
+        # check if ID is valid
+        test_sql = str("SELECT g.* FROM boardgame_shop.games "
+                       "AS g WHERE g.game_id = %s;")
+        test_id = [answer]
+        status = db.cursor.execute(test_sql, test_id)
+        db.cursor.fetchmany(10)  # empty the cursor
+        # -- input gameID is valid --
+        if status != ():
+            quantity = input('Quantity: ')
+            # verifying quantity is valid
+            while quantity == '0':
+                print('You have to chose at least one game to add '
+                      'it to the cart. Please try again.')
+                quantity = input('Quantity: ')
+            for i in range(len(quantity)):
+                valid_nrs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+                while quantity[i] not in valid_nrs:
+                    print('Invalid Input. Please try again.')
+                    quantity = input('Quantity: ')
+            # add to cart
+            db.add_to_cart(user_id, answer, quantity)
+            print('Successfully added to cart.')
+            print('Returning to member menu.')
+            member_menu(db, email)  # ...........................................................??? Member menu or sth else?
+        else:
+            print('This gameID does not exist. Please try again.')
+            browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
+
+    elif answer == 'n':
+        sec_game_nr += 2
+        browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
+
+    elif answer == '':
+        member_menu(db, email)
+
+    else:
+        print('Invalid Input. Try again.')
+        browse_by_genre(db, user_id, email, genre)
+
+
 def main():
     valid_connection = False
     username = None
     password = None
 
     while not valid_connection:
-        username = input('Enter your Database username: ')
-        password = getpass('Enter your Database password: ')
+        username = 'root'  # input('Enter your Database username: ') CHNAGE BEFORE SUBMITTING
+        password = 'password'  # getpass('Enter your Database password: ') CHNAGE BEFORE SUBMITTING
         if check_credentials(username, password):
             valid_connection = True
         else:
