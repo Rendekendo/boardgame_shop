@@ -72,4 +72,38 @@ class Database:
         self.cursor.execute(sql, val)
 
         self.connection.commit()
-        print(self.cursor.rowcount, 'record inserted')
+        print(f'f{quantity} games added to cart')
+
+    def search(self, query, offset, search_type):
+        if search_type == 'title':
+            sql = (
+                'SELECT game_id, title, designer, unit_price, '
+                'COUNT(*) OVER () AS total_count '
+                'FROM games '
+                'WHERE title LIKE %s '
+                'LIMIT 3 OFFSET %s'
+            )
+            val = ('%' + query + '%', offset)
+        else:
+            sql = (
+                'SELECT game_id, title, designer, unit_price, '
+                'COUNT(*) OVER () AS total_count '
+                'FROM games '
+                'WHERE designer LIKE %s '
+                'LIMIT 3 OFFSET %s'
+            )
+            val = (query + '%', offset)
+
+        self.cursor.execute(sql, val)
+        rows = self.cursor.fetchall()
+
+        if not rows:
+            return False, None
+
+        count = rows[0][4]
+
+        result = []
+        for row in rows:
+            result.append((row[0], row[1], row[2], row[3]))
+
+        return result, count
