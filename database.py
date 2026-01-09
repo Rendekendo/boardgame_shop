@@ -115,6 +115,15 @@ class Database:
         result = self.cursor.fetchall()
         return result
 
+    def checkout_delete(self, user_id):
+        sql = (
+            'DELETE '
+            'FROM cart '
+            'WHERE user_id = %s '
+        )
+        self.cursor.execute(sql, [user_id])
+        self.connection.commit()
+
     def search(self, query, offset, search_type):
         if search_type == 'title':
             sql = (

@@ -106,11 +106,11 @@ def search(db, user_id, search_type, query):
                     quantity = input('Quantity: ')
                     try:
                         quantity = int(quantity)
-                        if 0 < choice < 2147483647:
+                        if 0 < quantity < 2147483647:
                             break
                         else:
                             print('quantity must be a positive integer')
-                    except (Exception):
+                    except (ValueError):
                         print('quantity must be an integer')
                 db.add_to_cart(user_id, choice, quantity)
 
@@ -127,10 +127,13 @@ def format_db_return(lst):
 
 def view_cart(db, user_id):
     cart = db.get_cart(user_id)
-    formated_result = format_cart(cart)
+    if cart == []:
+        print('Empty cart')
+    else:
+        formated_result = format_cart(cart)
 
-    for entry in formated_result:
-        print(entry)
+        for entry in formated_result:
+            print(entry)
 
 
 def format_cart(lst):
