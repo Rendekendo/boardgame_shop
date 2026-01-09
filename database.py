@@ -148,3 +148,41 @@ class Database:
             result.append((row[0], row[1], row[2], row[3]))
 
         return result, count
+
+    def get_genres(self):
+        sql_get_genres = 'SELECT g.genre  FROM boardgame_shop.games AS g ' \
+                     'GROUP BY g.genre;'
+        self.cursor.execute(sql_get_genres)
+        genres = self.cursor.fetchmany(20)
+
+        return genres
+
+    def get_page_count(self, genre):
+        game_sql = 'SELECT COUNT(*) FROM boardgame_shop.games WHERE genre = %s'
+        game_val = [genre]
+        self.cursor.execute(game_sql, game_val)
+        sum_of_games = self.cursor.fetchone()
+
+        return sum_of_games
+
+    def get_game_data_browse(self, genre, sec_game_nr):
+        sql = """
+        SELECT g.game_id, g.title, g.unit_price
+        FROM boardgame_shop.games AS g
+        WHERE g.genre = %s
+        LIMIT 2 OFFSET %s;
+        """
+        val = [genre, sec_game_nr]
+        self.cursor.execute(sql, val)
+        rows = self.cursor.fetchmany(2)
+
+        return rows
+
+    def valid_game_id(self, answer):
+        test_sql = str("SELECT g.* FROM boardgame_shop.games "
+                       "AS g WHERE g.game_id = %s;")
+        test_id = [answer]
+        status = self.cursor.execute(test_sql, test_id)
+        self.cursor.fetchmany(10)  # empty the cursor
+
+        return status
