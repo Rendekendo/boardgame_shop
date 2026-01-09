@@ -65,14 +65,40 @@ class Database:
 
         return data[0][0]
 
-    def add_to_cart(self, user_id, game_id, quantity):
-        sql = 'INSERT INTO cart (user_id, game_id, quantity)' \
-              ' VALUES (%s, %s, %s)'
-        val = (user_id, game_id, quantity)
-        self.cursor.execute(sql, val)
+    def in_cart(self, user_id, game_id):
+        sql = 'SELECT quantity FROM cart WHERE user_id = %s AND game_id = %s'
+        self.cursor.execute(sql, (user_id, game_id))
+        quantity = self.cursor.fetchall()
 
-        self.connection.commit()
-        print(f'f{quantity} games added to cart')
+        if quantity == []:
+            return 0
+        else:
+            return quantity[0][0]
+
+    def add_to_cart(self, user_id, game_id, quantity):
+        quantity_in_cart = self.in_cart(user_id, game_id)
+        final_value = int(quantity) + int(quantity_in_cart)
+        if final_value > 2147483647:
+            print('What are you doing?')
+        else:
+
+            if quantity_in_cart != 0:
+                sql = (
+                    'UPDATE cart '
+                    'SET quantity = %s '
+                    'WHERE user_id = %s AND game_id = %s'
+                )
+                val = (final_value, user_id, game_id)
+            else:
+                sql = (
+                    'INSERT INTO cart (user_id, game_id, quantity)'
+                    ' VALUES (%s, %s, %s)'
+                    )
+                val = (user_id, game_id, quantity)
+
+            self.cursor.execute(sql, val)
+            self.connection.commit()
+            print(f'{quantity} games added to cart')
 
     def search(self, query, offset, search_type):
         if search_type == 'title':
