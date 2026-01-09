@@ -102,7 +102,16 @@ def search(db, user_id, search_type, query):
             if choice not in valid_input:
                 print('invalid input try again')
             else:
-                quantity = input('Quantity: ')
+                while True:
+                    quantity = input('Quantity: ')
+                    try:
+                        quantity = int(quantity)
+                        if 0 < choice < 2147483647:
+                            break
+                        else:
+                            print('quantity must be a positive integer')
+                    except (Exception):
+                        print('quantity must be an integer')
                 db.add_to_cart(user_id, choice, quantity)
 
 
