@@ -41,7 +41,10 @@ class Database:
         val = [input_email]
         self.cursor.execute(sql, val)
         result = self.cursor.fetchall()
-        email, pwd = result[0]
+        if result == []:
+            return False
+        else:
+            email, pwd = result[0]
 
         if (input_email, input_pwd) == (email, pwd):
             return True
@@ -99,6 +102,18 @@ class Database:
             self.cursor.execute(sql, val)
             self.connection.commit()
             print(f'{quantity} games added to cart')
+
+    def get_cart(self, user_id):
+        sql = (
+            'SELECT games.game_id, title, unit_price, quantity '
+            'FROM cart '
+            'JOIN games ON games.game_id = cart.game_id '
+            'WHERE user_id = %s '
+        )
+        self.cursor.execute(sql, [user_id])
+
+        result = self.cursor.fetchall()
+        return result
 
     def search(self, query, offset, search_type):
         if search_type == 'title':

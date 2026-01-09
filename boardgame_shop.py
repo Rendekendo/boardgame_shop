@@ -125,6 +125,45 @@ def format_db_return(lst):
     return result
 
 
+def view_cart(db, user_id):
+    cart = db.get_cart(user_id)
+    formated_result = format_cart(cart)
+
+    for entry in formated_result:
+        print(entry)
+
+
+def format_cart(lst):
+    game_id = 'Game ID'
+    title = 'Title'
+    unit_price = '$'
+    quantity = 'Qty'
+    total = 'Total'
+    cart_total = 0
+
+    result = []
+    result.append(f'\n{game_id:<10}{title:<50}{unit_price:>10}'
+                  f'{quantity:>3}{total:>10}')
+    result.append('-----------------------------------------'
+                  '------------------------------------------')
+    for game_id, title, unit_price, quantity in lst:
+        unit_price = float(unit_price)
+        total = unit_price * quantity
+        cart_total += total
+        total = f'{total:.2f}'
+
+        if len(title) >= 48:
+            title = title[:48] + '..'
+        result.append(f'{game_id:<10}{title:<50}{'$' + str(unit_price):<10}'
+                      f'{quantity:>3}{'$' + str(total):>10}')
+
+    result.append('-----------------------------------------'
+                  '------------------------------------------\n')
+
+    result.append(f'Total = ${cart_total:.2f}')
+    return result
+
+
 def login(db):
     valid_credentials = False
 
@@ -248,7 +287,7 @@ def member_menu(db, email):
             case '2':
                 search_games(db, user_id)
             case '3':
-                pass
+                view_cart(db, user_id)
             case '4':
                 pass
             case '5':
@@ -411,8 +450,8 @@ def main():
     password = None
 
     while not valid_connection:
-        username = 'root'  # input('Enter your Database username: ') CHNAGE BEFORE SUBMITTING
-        password = 'password'  # getpass('Enter your Database password: ') CHNAGE BEFORE SUBMITTING
+        username = input('Enter your Database username: ')
+        password = getpass('Enter your Database password: ')
         if check_credentials(username, password):
             valid_connection = True
         else:
@@ -442,6 +481,7 @@ def main():
             case '2':
                 register(db)
             case 'q':
+                db.connection.close()
                 break
 
 
