@@ -318,7 +318,10 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
     sum_of_games = db.cursor.fetchone()
     page += 1
     if page < sum_of_games[0]:
-        print(f'== {genre}: showing page {page}-{page+1} of {sum_of_games[0]} ==')
+        page_str1 = f'== {genre}: showing page {page}'
+        page_str2 = f'-{page+1} of {sum_of_games[0]} =='
+        page_str = page_str1 + page_str2
+        print(page_str)
     elif page <= sum_of_games[0]:
         print(f'== {genre}: showing page {page} of {sum_of_games[0]} ==')
     else:
@@ -397,8 +400,8 @@ def main():
     password = None
 
     while not valid_connection:
-        username = 'root'  # input('Enter your Database username: ') CHNAGE BEFORE SUBMITTING
-        password = 'password'  # getpass('Enter your Database password: ') CHNAGE BEFORE SUBMITTING
+        username = input('Enter your Database username: ')
+        password = getpass('Enter your Database password: ')
         if check_credentials(username, password):
             valid_connection = True
         else:
