@@ -226,7 +226,7 @@ def member_menu(db, email):
     4) Checkout
     5) Log out
             """)
-        print('welcome user', email, user_id)
+        print('Welcome user', email, user_id)
 
         choice = input('Type in your choice: ')
         valid_input = ['1', '2', '3', '4', '5']
@@ -247,68 +247,54 @@ def member_menu(db, email):
 
 
 def init_browse_by_genre(db, user_id, email):
-    strng = """
-== GENRES ==
-1)  Abstract
-2)  Cooperative
-3)  Deck-Building
-4)  Expansion
-5)  Family
-6)  Party
-7)  Strategy
-8)  Thematic
-9)  Wargame
-10) Worker Placement
-"""
+    # get genres
+    sql_get_genres = 'SELECT g.genre  FROM boardgame_shop.games AS g ' \
+                     'GROUP BY g.genre;'
+    db.cursor.execute(sql_get_genres)
+    genres = db.cursor.fetchmany(20)
+    # convert tuple to list so it can be sorted
+    genres_list = [genre for genre in genres]
+    genres_list.sort()
+
+    lst_of_str_genres = []
+    strng = '== GENRES == '
+    n = 0
+    for i in genres_list:
+        n += 1
+        genre = str(i).strip('()')
+        genre = str(genre).strip(',')
+        genre = str(genre).strip("'")
+        lst_of_str_genres.append(genre)
+        strng += f'\n{n}) {genre}'
     print(strng)
-    choice = input('Pick a number (or ENTER to return):')
-    match choice:
-        case '1':
-            genre = 'Abstract'
-        case '2':
-            genre = 'Cooperative'
-        case '3':
-            genre = 'Deck-Building'
-        case '4':
-            genre = 'Expansion'
-        case '5':
-            genre = 'Family'
-        case '6':
-            genre = 'Party'
-        case '7':
-            genre = 'Strategy'
-        case '8':
-            genre = 'Thematic'
-        case '9':
-            genre = 'Wargame'
-        case '10':
-            genre = 'Worker Placement'
-        case _:
-            print('Invalid input. Please enter a number between 1 and 10.')
-            valid_nr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-            while choice not in valid_nr:
-                choice = input('Enter your choice: ')
-                match choice:
-                    case '1':
-                        genre = 'Abstract'
-                    case '2':
-                        genre = 'Cooperative'
-                    case '3':
-                        genre = 'Deck-Building'
-                    case '4':
-                        genre = 'Expansion'
-                    case '5':
-                        genre = 'Family'
-                    case '6':
-                        genre = 'Party'
-                    case '7':
-                        genre = 'Strategy'
-                    case '8':
-                        genre = 'Thematic'
-                    case '9':
-                        genre = 'Wargame'
-                    case '10':
-                        genre = 'Worker Placement'
+    choice = ''
+    valid_nr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    while choice not in valid_nr:
+        choice = input('Pick a number (or ENTER to return):')
+        match choice:
+            case '1':
+                genre = lst_of_str_genres[0]
+            case '2':
+                genre = lst_of_str_genres[1]
+            case '3':
+                genre = lst_of_str_genres[2]
+            case '4':
+                genre = lst_of_str_genres[3]
+            case '5':
+                genre = lst_of_str_genres[4]
+            case '6':
+                genre = lst_of_str_genres[5]
+            case '7':
+                genre = lst_of_str_genres[6]
+            case '8':
+                genre = lst_of_str_genres[7]
+            case '9':
+                genre = lst_of_str_genres[8]
+            case '10':
+                genre = lst_of_str_genres[9]
+            case _:
+                print('Invalid input. Please enter a number between 1 and 10.')
+                choice = input('Pick a number (or ENTER to return):')
 
     browse_by_genre(db, user_id, email, genre)
 
@@ -379,7 +365,7 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
             db.add_to_cart(user_id, answer, quantity)
             print('Successfully added to cart.')
             print('Returning to member menu.')
-            member_menu(db, email)  # ...........................................................??? Member menu or sth else?
+            browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
         else:
             print('This gameID does not exist. Please try again.')
             browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
