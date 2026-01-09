@@ -262,6 +262,7 @@ def init_browse_by_genre(db, user_id, email):
     genres_list = [genre for genre in genres]
     genres_list.sort()
 
+    # printing the genre choices
     lst_of_str_genres = []
     strng = '== GENRES == '
     n = 0
@@ -273,34 +274,24 @@ def init_browse_by_genre(db, user_id, email):
         lst_of_str_genres.append(genre)
         strng += f'\n{n}) {genre}'
     print(strng)
+
+    # prompting the user to chose which genre they want to view
     choice = ''
-    valid_nr = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-    while choice not in valid_nr:
-        choice = input('Pick a number (or ENTER to return):')
-        match choice:
-            case '1':
-                genre = lst_of_str_genres[0]
-            case '2':
-                genre = lst_of_str_genres[1]
-            case '3':
-                genre = lst_of_str_genres[2]
-            case '4':
-                genre = lst_of_str_genres[3]
-            case '5':
-                genre = lst_of_str_genres[4]
-            case '6':
-                genre = lst_of_str_genres[5]
-            case '7':
-                genre = lst_of_str_genres[6]
-            case '8':
-                genre = lst_of_str_genres[7]
-            case '9':
-                genre = lst_of_str_genres[8]
-            case '10':
-                genre = lst_of_str_genres[9]
-            case _:
-                print('Invalid input. Please enter a number between 1 and 10.')
-                choice = input('Pick a number (or ENTER to return):')
+    game_nr = len(lst_of_str_genres)
+    choice = input(f'Pick a number 1-{game_nr} (or ENTER to return):')
+    # if user presses ENTER return to user menu
+    if choice == '':
+        member_menu(db, email)
+    else:
+        # check the input for validity
+        valid_input = '0123456789'
+        while choice not in valid_input or not 0 < int(choice) <= game_nr:
+            choice = input(f'Pick a number 1-{game_nr} (or ENTER to return):')
+            if choice == '':
+                member_menu(db, email)
+        choice = int(choice)
+        # assign the genre based on the users input
+        genre = lst_of_str_genres[choice-1]
 
     browse_by_genre(db, user_id, email, genre)
 
@@ -311,13 +302,16 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
     # -- get data for pages --
     sum_of_games = db.get_page_count(genre)
     page += 1
+    # print 2 games
     if page < sum_of_games[0]:
         page_str1 = f'== {genre}: showing page {page}'
         page_str2 = f'-{page+1} of {sum_of_games[0]} =='
         page_str = page_str1 + page_str2
         print(page_str)
+    # print 1 game if on last page
     elif page <= sum_of_games[0]:
         print(f'== {genre}: showing page {page} of {sum_of_games[0]} ==')
+    # returning to the genre choice page if all games have been displayed
     else:
         print('All available games have been displayed. '
               'Returning to chosing the genre.')
@@ -350,11 +344,10 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
                 print('You have to chose at least one game to add '
                       'it to the cart. Please try again.')
                 quantity = input('Quantity: ')
-            for i in range(len(quantity)):
-                valid_nrs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
-                while quantity[i] not in valid_nrs:
-                    print('Invalid Input. Please try again.')
-                    quantity = input('Quantity: ')
+            valid_nrs = '0123456789'
+            while quantity not in valid_nrs:
+                print('Invalid Input. Please try again.')
+                quantity = input('Quantity: ')
             # add to cart
             db.add_to_cart(user_id, answer, quantity)
             print('Successfully added to cart.')
@@ -364,16 +357,24 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
             print('This gameID does not exist. Please try again.')
             browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
 
-    elif answer == 'n':
+    elif answer == 'n':  # go to next page
         sec_game_nr += 2
         browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
 
-    elif answer == '':
+    elif answer == '':  # return to member menu
         member_menu(db, email)
 
     else:
         print('Invalid Input. Try again.')
         browse_by_genre(db, user_id, email, genre)
+
+
+def checkout(db, user_id):
+    order_data = ''
+    pass
+    # get order nr
+    # get user data (name, street, nr, city, postal code)
+    # get time order was submitted
 
 
 def main():
