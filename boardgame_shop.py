@@ -257,10 +257,7 @@ def member_menu(db, email):
 
 def init_browse_by_genre(db, user_id, email):
     # get genres
-    sql_get_genres = 'SELECT g.genre  FROM boardgame_shop.games AS g ' \
-                     'GROUP BY g.genre;'
-    db.cursor.execute(sql_get_genres)
-    genres = db.cursor.fetchmany(20)
+    genres = db.get_genres()
     # convert tuple to list so it can be sorted
     genres_list = [genre for genre in genres]
     genres_list.sort()
@@ -312,10 +309,7 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
     print('------------------------------------'
           '------------------------------------')
     # -- get data for pages --
-    game_sql = 'SELECT COUNT(*) FROM boardgame_shop.games WHERE genre = %s'
-    game_val = [genre]
-    db.cursor.execute(game_sql, game_val)
-    sum_of_games = db.cursor.fetchone()
+    sum_of_games = db.get_page_count(genre)
     page += 1
     if page < sum_of_games[0]:
         page_str1 = f'== {genre}: showing page {page}'
@@ -331,16 +325,8 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
     page += 1
 
     # -- get actual game data --
-    sql = """
-    SELECT g.game_id, g.title, g.unit_price
-    FROM boardgame_shop.games AS g
-    WHERE g.genre = %s
-    LIMIT 2 OFFSET %s;
-    """
     # sec(ond)_game_nr: which number to use with OFFSET in query
-    val = [genre, sec_game_nr]
-    db.cursor.execute(sql, val)
-    rows = db.cursor.fetchmany(2)
+    rows = db.get_game_data_browse(genre, sec_game_nr)
     for tuples in rows:
         str_of_elements = ''
         for element in tuples:
@@ -355,11 +341,7 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
     # user chose to add game to cart
     if answer[:2] == 'BG':
         # check if ID is valid
-        test_sql = str("SELECT g.* FROM boardgame_shop.games "
-                       "AS g WHERE g.game_id = %s;")
-        test_id = [answer]
-        status = db.cursor.execute(test_sql, test_id)
-        db.cursor.fetchmany(10)  # empty the cursor
+        status = db.valid_game_id(answer)
         # -- input gameID is valid --
         if status != ():
             quantity = input('Quantity: ')
