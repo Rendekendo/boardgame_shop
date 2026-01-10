@@ -32,36 +32,45 @@ class Database:
                email,
                pwd_hash)
 
+        # insert user data into user table
         self.cursor.execute(sql, val)
         self.connection.commit()
         print(self.cursor.rowcount, 'record inserted')
 
     def login(self, input_email, input_pwd):
+        # verify if credentials are in database
+
+        # get email and password where input_email
         sql = 'SELECT email, pwd_hash FROM users WHERE email = %s'
         val = [input_email]
         self.cursor.execute(sql, val)
         result = self.cursor.fetchall()
-        if result == []:
-            return False
-        else:
-            email, pwd = result[0]
 
-        if (input_email, input_pwd) == (email, pwd):
-            return True
-        else:
+        if result == []:  # no email found, invalid credentials
             return False
+        else:
+            email, pwd = result[0]  # unpack credentials
+
+        if (input_email, input_pwd) == (email, pwd):  # compare with input
+            return True  # correct
+        else:
+            return False  # invalid
 
     def check_unique_email(self, input_email):
+        # check if email is already in database
+
         sql = 'SELECT email FROM users WHERE email = %s'
         self.cursor.execute(sql, [input_email])
         data = self.cursor.fetchall()
 
         if data == []:  # email not in database yet
             return True
-        else:
+        else:  # email found
             return False
 
     def get_id(self, email):
+        # return user_id from email
+
         sql = 'SELECT user_id FROM users WHERE email = %s'
         self.cursor.execute(sql, [email])
         data = self.cursor.fetchall()
@@ -69,41 +78,51 @@ class Database:
         return data[0][0]
 
     def in_cart(self, user_id, game_id):
+        # return quantity of a specific game in a specific user's cart
+
         sql = 'SELECT quantity FROM cart WHERE user_id = %s AND game_id = %s'
         self.cursor.execute(sql, (user_id, game_id))
         quantity = self.cursor.fetchall()
 
-        if quantity == []:
+        if quantity == []:  # no data i.e. 0 items
             return 0
         else:
-            return quantity[0][0]
+            return quantity[0][0]  # return quantity in string
 
     def add_to_cart(self, user_id, game_id, quantity):
+        # insert values into cart table
+
+        # if item already in cart
         quantity_in_cart = self.in_cart(user_id, game_id)
         final_value = int(quantity) + int(quantity_in_cart)
+
         if final_value > 2147483647:
             print('What are you doing?')
         else:
 
-            if quantity_in_cart != 0:
+            if quantity_in_cart != 0:  # if already in cart update value
                 sql = (
                     'UPDATE cart '
                     'SET quantity = %s '
                     'WHERE user_id = %s AND game_id = %s'
                 )
                 val = (final_value, user_id, game_id)
-            else:
+
+            else:  # not in cart yet
                 sql = (
                     'INSERT INTO cart (user_id, game_id, quantity)'
                     ' VALUES (%s, %s, %s)'
                     )
                 val = (user_id, game_id, quantity)
 
+            # send sql command
             self.cursor.execute(sql, val)
             self.connection.commit()
             print(f'{quantity} games added to cart')
 
     def get_cart(self, user_id):
+        # returns cart data of a specific user
+
         sql = (
             'SELECT games.game_id, title, unit_price, quantity '
             'FROM cart '
@@ -116,6 +135,8 @@ class Database:
         return result
 
     def checkout_delete(self, user_id):
+        # clear cart data after checkout
+
         sql = (
             'DELETE '
             'FROM cart '
@@ -125,7 +146,9 @@ class Database:
         self.connection.commit()
 
     def search(self, query, offset, search_type):
-        if search_type == 'title':
+        # search for game by title or designer
+
+        if search_type == 'title':  # user chose title search
             sql = (
                 'SELECT game_id, title, designer, unit_price, '
                 'COUNT(*) OVER () AS total_count '
@@ -133,8 +156,10 @@ class Database:
                 'WHERE title LIKE %s '
                 'LIMIT 3 OFFSET %s'
             )
+            # whole word query
             val = ('%' + query + '%', offset)
-        else:
+
+        else:  # designer search
             sql = (
                 'SELECT game_id, title, designer, unit_price, '
                 'COUNT(*) OVER () AS total_count '
@@ -142,16 +167,21 @@ class Database:
                 'WHERE designer LIKE %s '
                 'LIMIT 3 OFFSET %s'
             )
+            # query starts with
             val = (query + '%', offset)
 
+        # send sql command
         self.cursor.execute(sql, val)
         rows = self.cursor.fetchall()
 
+        # no results
         if not rows:
             return False, None
 
+        # get total count of games found
         count = rows[0][4]
 
+        # return found games in list
         result = []
         for row in rows:
             result.append((row[0], row[1], row[2], row[3]))
