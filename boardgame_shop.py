@@ -2,7 +2,7 @@ from getpass import getpass
 from database import Database
 from mysql.connector import connect
 import hashlib
-from decimal import Decimal
+from decimal import Decimal  # needed to parse database data
 import re
 
 
@@ -14,30 +14,38 @@ def check_credentials(username, password):
                 database="boardgame_shop")
         return True
 
-    except (Exception):
+    except Exception:  # wrong password or server not running
         return False
 
 
 def is_valid_email(email):
+    # use regex to check if an email adress is valid
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+    # return true if its valid
     return re.match(pattern, email) is not None
 
 
 def is_name(word):
-    chars = "qwertyuiopasdfghjklzxcvbnmåöäéQWERTYUIOPASDFGHJKLZXCVBNMÅÖÄÉ\'-"
+    # check if name contains numbers
+    chars = '0123456789'
     for char in word:
-        if char not in chars:
+        if char in chars:
             return False
     return True
 
 
 def hash_pwd(string):
+    # hash encoded string with sha256
     hash_object = hashlib.sha256(string.encode())
+
+    # return hex_digest i.e. string of characters in hex
     hex_digest = hash_object.hexdigest()
     return hex_digest
 
 
 def search_games(db, user_id):
+    # menu loop
     while True:
         print("""
     == Search ==
@@ -46,27 +54,33 @@ def search_games(db, user_id):
     3) back to main menu
             """)
 
-        choice = input('Type in your choice: ')
+        choice = input('Type in your choice: ')  # get input
         valid_input = ['1', '2', '3']
-        if choice not in valid_input or choice == '':
+        if choice not in valid_input or choice == '':  # validate input
             print('invalid input try again')
 
         match choice:
             case '1':
+                # get user input for by designer search
                 while True:
                     query = input('Designer starts with: ')
                     if query != '':
                         break
                     else:
                         print('input mustn\'t be empty')
+
+                # search with the query
                 search(db, user_id, 'designer', query)
             case '2':
+                # get user input for by title search
                 while True:
                     query = input('Title word: ')
                     if query != '':
                         break
                     else:
                         print('input mustn\'t be empty')
+
+                # search with the query
                 search(db, user_id, 'title', query)
             case '3':
                 return
@@ -74,36 +88,57 @@ def search_games(db, user_id):
 
 def search(db, user_id, search_type, query):
     offset = 0
+
     while True:
+        # get search results and count of results using the db method
         result, count = db.search(query, offset, search_type)
-        if result:
+
+        if result:  # games found
+            # format results
             print_result = format_db_return(result)
+
+            # print page information
             x = '== Results(showing'
             print(x, f'{offset + 1} - {offset + 3} of {count}) ==')
+
+            # print games
             for game in print_result:
                 print(game)
-        else:
+
+        else:  # no games found
             print(f'No games found with {search_type}: {query}')
             return
 
+        # print options
         print('\nOptions: enter Game ID to add to cart,'
               ' \'n\' for next, ENTER to return.\n')
 
+        # get user input
         choice = input('> ')
-        if choice == 'n':
-            if count > offset + 3:
+        if choice == 'n':  # show next page
+            if count > offset + 3:  # if not on last page
                 offset += 3
-            else:
+
+            else:  # last page
                 print('No more results')
-        elif choice == '':
+
+        elif choice == '':  # back to main menu
             return
-        else:
+
+        else:  # user typing in a game id i.e. buying a game
+
+            # get a list of valid ids from result
             valid_input = [result[x][0] for x in range(len(result))]
+
             if choice not in valid_input:
                 print('invalid input try again')
-            else:
+
+            else:  # choice in valid_input
                 while True:
+                    # get quantity input from user
                     quantity = input('Quantity: ')
+
+                    # check if quantity is valid
                     try:
                         quantity = int(quantity)
                         if 0 < quantity < 2147483647:
@@ -112,13 +147,16 @@ def search(db, user_id, search_type, query):
                             print('quantity must be a positive integer')
                     except (ValueError):
                         print('quantity must be an integer')
+
+                # add game to cart
                 db.add_to_cart(user_id, choice, quantity)
 
 
 def format_db_return(lst):
+    # formats data from database to a list of strings
     result = []
     for game_id, title, designer, unit_price in lst:
-        price = str(unit_price)
+        price = str(unit_price)  # convert decimal object to string
 
         result.append(f'ID {game_id}: {title} by {designer} ${price}')
 
@@ -126,14 +164,20 @@ def format_db_return(lst):
 
 
 def view_cart(db, user_id):
+    # display user's cart
     cart = db.get_cart(user_id)
-    if cart == []:
+
+    if cart == []:  # empty cart
         print('Empty cart')
-    else:
-        formated_result = format_cart(cart)
+
+    else:  # not empty cart
+        # format the result
+        formated_result, cart_return = format_cart(cart)
 
         for entry in formated_result:
             print(entry)
+
+        return cart_return  # [game_id, quantity, line_total]
 
 
 def format_cart(lst):
@@ -144,33 +188,42 @@ def format_cart(lst):
     total = 'Total'
     cart_total = 0
 
+    # formats data into a list of strings
     result = []
+    cart_return = []
     result.append(f'\n{game_id:<10}{title:<50}{unit_price:>10}'
                   f'{quantity:>3}{total:>10}')
     result.append('-----------------------------------------'
                   '------------------------------------------')
+
+    # game information
     for game_id, title, unit_price, quantity in lst:
         unit_price = float(unit_price)
         total = unit_price * quantity
         cart_total += total
         total = f'{total:.2f}'
 
+        # truncate string if title too long
         if len(title) >= 48:
             title = title[:48] + '..'
         result.append(f'{game_id:<10}{title:<50}{'$' + str(unit_price):<10}'
                       f'{quantity:>3}{'$' + str(total):>10}')
+        cart_return.append([game_id, quantity, total])
 
     result.append('-----------------------------------------'
                   '------------------------------------------\n')
 
+    # append total cart value
     result.append(f'Total = ${cart_total:.2f}')
-    return result
+    return result, cart_return
 
 
 def login(db):
+    # let's user login provided with correct credentials
     valid_credentials = False
 
     while not valid_credentials:
+        # get email
         while True:
             email = input('Enter Email: ')
             if is_valid_email(email):
@@ -179,6 +232,7 @@ def login(db):
             else:
                 print('Invalid Input')
 
+        # get password
         while True:
             password = hash_pwd(getpass('Enter Password (hidden): '))
             if password != '':
@@ -186,15 +240,20 @@ def login(db):
             else:
                 print('Invalid Input')
 
+        # user db method to check if credentials are correct
         if db.login(email, password):
             valid_credentials = True
+
+        # invalid credentials
         else:
             print('Invalid Credentials, try again')
 
+    # send user to member menu
     member_menu(db, email)
 
 
 def register(db):
+    # get first name
     while True:
         first_name = input('Enter first name: ')
         if is_name(first_name) and first_name != '' and len(first_name) <= 50:
@@ -202,6 +261,7 @@ def register(db):
         else:
             print('name must consist of only letters try again \n')
 
+    # get last name
     while True:
         last_name = input('Enter last name: ')
         if is_name(last_name) and last_name != '' and len(first_name) <= 50:
@@ -209,6 +269,7 @@ def register(db):
         else:
             print('name must consist of only letters try again \n')
 
+    # get street
     while True:
         street = input('Enter street: ')
         if street != '' and len(first_name) <= 80:
@@ -216,6 +277,7 @@ def register(db):
         else:
             print('street is required')
 
+    # get city
     while True:
         city = input('Enter city: ')
         if city != '' and len(first_name) <= 40:
@@ -223,6 +285,7 @@ def register(db):
         else:
             print('city is required')
 
+    # get postal_code
     while True:
         postal_code = input('Enter postal code: ')
         if postal_code != '' and len(first_name) <= 10:
@@ -230,10 +293,13 @@ def register(db):
         else:
             print('postal code is required')
 
+    # get phone (optional)
     phone = input('Enter phone (optional): ')
+    # if phone not entered: set phone to None
     if phone == '':
         phone = None
 
+    # get email
     while True:
         email = input('Enter email: ')
         if is_valid_email(email) and db.check_unique_email(email):
@@ -243,14 +309,17 @@ def register(db):
         else:
             print('Invalid email, try again \n')
 
+    # get password
     while True:
         password = getpass('Enter password (hidden): ')
         if password != '' and len(password) >= 8:
+            # hash the password
             password = hash_pwd(password)
             break
         else:
             print('password is required\n')
 
+    # send data to db
     db.register(first_name,
                 last_name,
                 street,
@@ -260,12 +329,15 @@ def register(db):
                 email,
                 password)
 
+    # send user to member menu
     member_menu(db, email)
 
 
 def member_menu(db, email):
+    # get user id with email
     user_id = db.get_id(email)
 
+    # menu loop
     while True:
         print("""
     ********************************************
@@ -284,6 +356,7 @@ def member_menu(db, email):
         if choice not in valid_input or choice == '':
             print('invalid input try again')
 
+        # menu options
         match choice:
             case '1':
                 init_browse_by_genre(db, user_id, email)
@@ -425,6 +498,7 @@ def main():
     username = None
     password = None
 
+    # get login credentials from user and validate credentials
     while not valid_connection:
         username = input('Enter your Database username: ')
         password = getpass('Enter your Database password: ')
@@ -435,7 +509,10 @@ def main():
                   ' Please make sure your credentials '
                   'are correct or mySQL server is running')
 
+    # create database object with correct credentials
     db = Database(username, password)
+
+    # menu loop
     while True:
         print("""
     ********************************************
@@ -451,14 +528,17 @@ def main():
         if choice not in valid_input or choice == '':
             print('invalid input try again')
 
+        # menu options
         match choice:
             case '1':
                 login(db)
             case '2':
                 register(db)
             case 'q':
+                # disconnect from db before exiting programme
                 db.connection.close()
                 break
 
 
-main()
+if __name__ == "__main__":
+    main()
