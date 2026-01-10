@@ -312,12 +312,16 @@ def register(db):
     # get password
     while True:
         password = getpass('Enter password (hidden): ')
-        if password != '' and len(password) >= 8:
-            # hash the password
-            password = hash_pwd(password)
-            break
+        verify_password = getpass('Verify password: ')
+        if password == verify_password:
+            if password != '' and len(password) >= 8:
+                # hash the password
+                password = hash_pwd(password)
+                break
+            else:
+                print('password is too short\n')
         else:
-            print('password is required\n')
+            print('Password not matching, try again')
 
     # send data to db
     db.register(first_name,
