@@ -35,7 +35,7 @@ class Database:
         # insert user data into user table
         self.cursor.execute(sql, val)
         self.connection.commit()
-        print(self.cursor.rowcount, 'record inserted')
+        print('User registration succesful')
 
     def login(self, input_email, input_pwd):
         # verify if credentials are in database
