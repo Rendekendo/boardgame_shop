@@ -191,7 +191,7 @@ def format_cart(lst):
     # formats data into a list of strings
     result = []
     cart_return = []
-    result.append(f'\n{game_id:<10}{title:<50}{unit_price:>10}'
+    result.append(f'\n{game_id:<10}{title:<50}{unit_price:<10}'
                   f'{quantity:>3}{total:>10}')
     result.append('-----------------------------------------'
                   '------------------------------------------')
