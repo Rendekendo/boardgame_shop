@@ -115,6 +115,38 @@ class Database:
         result = self.cursor.fetchall()
         return result
 
+    def add_to_orders(self, user_id):
+        # get insertion data based on the user id
+        sql_get = ('SELECT u.first_name, u.last_name, '
+               'u.street, u.city, u.postal_code '
+               'FROM board_games.users AS u '
+               'WHERE u.user_id = %s')
+        val_get = [user_id]
+        self.cursor.execute(sql_get, val_get)
+        answer = self.cursor.fetchmany(5)
+
+        # convert data intno a list of strings
+        lst_of_user_data = list()
+        for i in answer:
+            i = str(i)
+            lst_of_user_data.append(i)
+
+        # add data to orders table
+        sql_add = ('INSERT INTO orders (user_id, ship_street, ship_city, ' \
+                   'ship_postal_code) VALUES (%s, %s, %s, %s)')
+        val_add = lst_of_user_data
+        self.cursor.execute(sql_add, val_add)
+        self.connection.commit()
+
+        # return user data to display it
+        return lst_of_user_data
+
+    def add_to_order_items(self, user_id, order_no, line_totals):
+        # get game_ids and quantities with user id from cart
+        # get order_no
+        # add to order_items
+        pass
+
     def checkout_delete(self, user_id):
         sql = (
             'DELETE '
@@ -195,3 +227,7 @@ class Database:
         self.cursor.fetchmany(10)  # empty the cursor
 
         return status
+
+    def checkout_user_data(self, user_id):
+        
+

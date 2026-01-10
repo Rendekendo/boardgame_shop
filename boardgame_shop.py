@@ -412,11 +412,12 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
 
 
 def checkout(db, user_id):
-    order_data = ''
+    user_data = db.add_to_orders(user_id)
+    
+
     pass
-    # get order nr
-    # get user data (name, street, nr, city, postal code)
-    # get time order was submitted
+    # get user data (name, street & nr, city, postal code)
+    # get time order was submitted order nr
 
 
 def main():
