@@ -58,7 +58,7 @@ def search_games(db, user_id):
         choice = input('Type in your choice: ')  # get input
         valid_input = ['1', '2', '3']
         if choice not in valid_input or choice == '':  # validate input
-            print('invalid input try again')
+            print('- invalid input, try again')
 
         match choice:
             case '1':
@@ -68,7 +68,7 @@ def search_games(db, user_id):
                     if query != '':
                         break
                     else:
-                        print('input mustn\'t be empty')
+                        print('- input mustn\'t be empty')
 
                 # search with the query
                 search(db, user_id, 'designer', query)
@@ -79,7 +79,7 @@ def search_games(db, user_id):
                     if query != '':
                         break
                     else:
-                        print('input mustn\'t be empty')
+                        print('- input mustn\'t be empty')
 
                 # search with the query
                 search(db, user_id, 'title', query)
@@ -99,7 +99,7 @@ def search(db, user_id, search_type, query):
             print_result = format_db_return(result)
 
             # print page information
-            x = '== Results(showing'
+            x = '\n== Results(showing'
             print(x, f'{offset + 1} - {offset + 3} of {count}) ==')
 
             # print games
@@ -107,7 +107,7 @@ def search(db, user_id, search_type, query):
                 print(game)
 
         else:  # no games found
-            print(f'No games found with {search_type}: {query}')
+            print(f'- No games found with {search_type}: {query}')
             return
 
         # print options
@@ -121,7 +121,7 @@ def search(db, user_id, search_type, query):
                 offset += 3
 
             else:  # last page
-                print('No more results')
+                print('\n== No more results ==\n')
 
         elif choice == '':  # back to main menu
             return
@@ -132,7 +132,7 @@ def search(db, user_id, search_type, query):
             valid_input = [result[x][0] for x in range(len(result))]
 
             if choice not in valid_input:
-                print('invalid input try again')
+                print('\n== invalid input, try again ==\n')
 
             else:  # choice in valid_input
                 while True:
@@ -145,9 +145,9 @@ def search(db, user_id, search_type, query):
                         if 0 < quantity < 2147483647:
                             break
                         else:
-                            print('quantity must be a positive integer')
+                            print('- quantity must be a positive integer')
                     except (ValueError):
-                        print('quantity must be an integer')
+                        print('- quantity must be an integer')
 
                 # add game to cart
                 db.add_to_cart(user_id, choice, quantity)
@@ -169,7 +169,7 @@ def view_cart(db, user_id):
     cart = db.get_cart(user_id)
 
     if cart == []:  # empty cart
-        print('Empty cart')
+        print('\n== Your cart is empty ==\n')
 
     else:  # not empty cart
         # format the result
@@ -192,7 +192,7 @@ def format_cart(lst):
     # formats data into a list of strings
     result = []
     cart_return = []
-    result.append(f'\n{game_id:<10}{title:<50}{unit_price:>10}'
+    result.append(f'\n{game_id:<10}{title:<50}{unit_price:<10}'
                   f'{quantity:>3}{total:>10}')
     result.append('-----------------------------------------'
                   '------------------------------------------')
@@ -223,6 +223,7 @@ def login(db):
     # let's user login provided with correct credentials
     valid_credentials = False
 
+    print('\n== User Login ==')
     while not valid_credentials:
         # get email
         while True:
@@ -250,17 +251,20 @@ def login(db):
             print('Invalid Credentials, try again')
 
     # send user to member menu
+    print('Login succesful  ')
     member_menu(db, email)
 
 
 def register(db):
+    print('\n== New Member Registration ==')
+
     # get first name
     while True:
         first_name = input('Enter first name: ')
         if is_name(first_name) and first_name != '' and len(first_name) <= 50:
             break
         else:
-            print('name must consist of only letters try again \n')
+            print('- invalid name, try again\n')
 
     # get last name
     while True:
@@ -268,7 +272,7 @@ def register(db):
         if is_name(last_name) and last_name != '' and len(first_name) <= 50:
             break
         else:
-            print('name must consist of only letters try again \n')
+            print('- invalid name, try again\n')
 
     # get street
     while True:
@@ -276,7 +280,7 @@ def register(db):
         if street != '' and len(first_name) <= 80:
             break
         else:
-            print('street is required')
+            print('- street name invalid')
 
     # get city
     while True:
@@ -284,7 +288,7 @@ def register(db):
         if city != '' and len(first_name) <= 40:
             break
         else:
-            print('city is required')
+            print('- city name invalid')
 
     # get postal_code
     while True:
@@ -292,13 +296,17 @@ def register(db):
         if postal_code != '' and len(first_name) <= 10:
             break
         else:
-            print('postal code is required')
+            print('- postal code invalid')
 
     # get phone (optional)
-    phone = input('Enter phone (optional): ')
-    # if phone not entered: set phone to None
-    if phone == '':
-        phone = None
+    while True:
+        phone = input('Enter phone (optional): ')
+        # if phone not entered: set phone to None
+        if phone == '':
+            phone = None
+            break
+        elif len(phone) <= 20:
+            break
 
     # get email
     while True:
@@ -308,17 +316,21 @@ def register(db):
                 email = email.lower()
                 break
         else:
-            print('Invalid email, try again \n')
+            print('- invalid email, try again \n')
 
     # get password
     while True:
         password = getpass('Enter password (hidden): ')
-        if password != '' and len(password) >= 8:
-            # hash the password
-            password = hash_pwd(password)
-            break
+        verify_password = getpass('Verify password: ')
+        if password == verify_password:
+            if password != '' and len(password) >= 8:
+                # hash the password
+                password = hash_pwd(password)
+                break
+            else:
+                print('password is too short\n')
         else:
-            print('password is required\n')
+            print('passwords not matching, try again')
 
     # send data to db
     db.register(first_name,
@@ -350,7 +362,7 @@ def member_menu(db, email):
     4) Checkout
     5) Log out
             """)
-        print('Welcome user', email, user_id)
+        print('Welcome user: ', email)
 
         choice = input('Type in your choice: ')
         valid_input = ['1', '2', '3', '4', '5']
