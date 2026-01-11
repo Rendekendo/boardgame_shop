@@ -134,82 +134,42 @@ class Database:
         result = self.cursor.fetchall()
         return result
 
-    def add_to_orders(self, user_id, time):
-        # get insertion data based on the user id
-        sql_get = ('SELECT u.first_name, u.last_name, '
-                   'u.street, u.city, u.postal_code '
-                   'FROM boardgame_shop.users AS u '
-                   'WHERE u.user_id = %s')
-        val_get = [user_id]
-        self.cursor.execute(sql_get, val_get)
-        answer = self.cursor.fetchmany(5)
+    def create_order(self, user_id, time, cart_data):
+        sql_get = (
+            'SELECT first_name, last_name, street, city, postal_code '
+            'FROM boardgame_shop.users '
+            'WHERE user_id = %s'
+        )
+        self.cursor.execute(sql_get, [user_id])
+        user_data = self.cursor.fetchone()
 
-        print(answer)
+        first_name, last_name, street, city, postal_code = user_data
 
-        # convert data into a list of strings
-        lst_of_user_data_export = list()
-        for tuple in answer:
-            for data in tuple:
-                data = str(data)
-                lst_of_user_data_export.append(data)
+        sql_order = (
+            'INSERT INTO orders (user_id, created, ship_street,'
+            ' ship_city, ship_postal_code) '
+            'VALUES (%s, %s, %s, %s, %s)'
+        )
+        self.cursor.execute(sql_order, (user_id, time,
+                                        street, city, postal_code))
 
-        lst_of_user_data_sql = list()
-        i = 0
-        for tuple in answer:
-            for data in tuple:
-                if i == 0:
-                    lst_of_user_data_sql.append(user_id)
-                elif i == 1:
-                    lst_of_user_data_sql.append(time)
-                else:
-                    lst_of_user_data_sql.append(data)
-                i += 1
+        order_no = self.cursor.lastrowid
 
-        print(lst_of_user_data_sql)
+        sql_items = (
+            'INSERT INTO order_items (order_no, game_id, '
+            'quantity, line_total) '
+            'VALUES (%s, %s, %s, %s)'
+        )
 
-        # add data to orders table
-        sql_add = ('INSERT INTO orders (user_id, created, ship_street, '
-                   'ship_city, ship_postal_code) VALUES (%s, %s, %s, %s, %s)')
-        val_add = lst_of_user_data_sql
-        self.cursor.execute(sql_add, val_add)
+        for game_id, quantity, line_total in cart_data:
+            self.cursor.execute(
+                sql_items,
+                (order_no, game_id, quantity, line_total)
+            )
+
         self.connection.commit()
 
-        # return user data to display it
-        return lst_of_user_data_export
-
-    def add_to_order_items(self, user_id, cart_data):
-        # get order no
-        sql_order_no = ('SELECT o.order_no '
-                        'FROM boardgame_shop.orders WHERE user_id = %s '
-                        'ORDER BY o.created DESC '
-                        'LIMIT 1')
-        val_order_no = [user_id]
-        self.cursor.execute(sql_order_no, val_order_no)
-        order_no = self.cursor.fetchmany(1)
-
-        # add to order_items
-        lst_of_oder_data = []
-        for i in range(0, len(cart_data, 3)):
-            sql_add = ('INSERT INTO order_items (order_no, game_id, '
-                       'quantity, line_total) '
-                       'VALUES (%s, %s, %s, %s)')
-            val_add = [order_no, cart_data[i], cart_data[i + 1], cart_data[i + 2]]
-            lst_of_oder_data.append(val_add)
-            self.cursor.execute(sql_add, val_add)
-            self.connection.commit()
-
-        return order_no, lst_of_oder_data
-
-    def view_order_items(self, order_no):
-        sql = ('SELECT games.game_id, title, unit_price, quantity, line_total'
-               'FROM order_items '
-               'JOIN games ON games.game_id = order_items.game_id '
-               'WHERE order_no = %s ')
-        val = [order_no]
-        self.cursor.execute(sql, val)
-        result = self.cursor.fetchall()
-
-        return result
+        return user_data, order_no
 
     def checkout_delete(self, user_id):
         # clear cart data after checkout

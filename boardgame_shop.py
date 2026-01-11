@@ -142,7 +142,9 @@ def search(db, user_id, search_type, query):
                     # check if quantity is valid
                     try:
                         quantity = int(quantity)
-                        if 0 < quantity < 2147483647:
+                        if quantity > 2147483647:
+                            print('What are you doing?!')
+                        elif 0 < quantity < 2147483647:
                             break
                         else:
                             print('- quantity must be a positive integer')
@@ -170,6 +172,7 @@ def view_cart(db, user_id):
 
     if cart == []:  # empty cart
         print('\n== Your cart is empty ==\n')
+        return False
 
     else:  # not empty cart
         # format the result
@@ -205,11 +208,11 @@ def format_cart(lst):
         total = f'{total:.2f}'
 
         # truncate string if title too long
-        """if len(title) >= 48:
+        if len(title) >= 48:
             title = title[:48] + '..'
         result.append(f'{game_id:<10}{title:<50}{'$' + str(unit_price):<10}'
                       f'{quantity:>3}{'$' + str(total):>10}')
-        cart_return.append([game_id, quantity, total])"""  #  .......................................................
+        cart_return.append([game_id, quantity, total])
 
     result.append('-----------------------------------------'
                   '------------------------------------------\n')
@@ -406,7 +409,7 @@ def init_browse_by_genre(db, user_id, email):
     # prompting the user to chose which genre they want to view
     choice = ''
     game_nr = len(lst_of_str_genres)
-    choice = input(f'Pick a number 1-{game_nr} (or ENTER to return):')
+    choice = input(f'Pick a number 1-{game_nr} (or ENTER to return): ')
     # if user presses ENTER return to user menu
     if choice == '':
         member_menu(db, email)
@@ -497,16 +500,29 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
 
 
 def checkout(db, user_id):
+    cart_data = view_cart(db, user_id)
+    if cart_data is False:
+        return
+
+    while True:
+        choice = input('Proceed to checkout (Y/N) ?: ')
+        choice = choice.lower()
+        if choice == 'y':
+            break
+        elif choice == 'n':
+            return
+        else:
+            print('- invalid input')
+
     # create timestamp for database
     time = datetime.now()
     # inserts order data and returns user data
-    user_data = db.add_to_orders(user_id, time)
-    cart_data = view_cart(db, user_id)
-    # inserts cart_data into order_items and returns order no
-    order_no, order_data = db.add_to_order_items(user_id, cart_data)
+
+    # inserts cart_data into orders and order_items and returns order no
+    user_data, order_no = db.create_order(user_id, time, cart_data)
 
     # -- Invoice printing --
-    print('========================================='
+    print('\n========================================='
           '==========================================')
     print(f'Invoice for Order Nr. {order_no}')
     print('========================================='
@@ -517,21 +533,20 @@ def checkout(db, user_id):
     print(f'City: {user_data[4]}, {user_data[3]}')
 
     # get delivery date
-    order_date = datetime.fromtimestamp(time)
+    order_date = time
     day_delta = timedelta(days=7)
     delivery_date = order_date + day_delta
-    delivery_date.date()
+    delivery_date = delivery_date.date()
 
     print(f'Estimated delivery date: {delivery_date}')
     print('-----------------------------------------'
           '------------------------------------------')
 
-    # print ordered games
-    ordered_games = db.view_order_items(order_no)
-    formated_games, lst = format_cart(ordered_games)
-
-    for line in formated_games:
-        print(line)
+    view_cart(db, user_id)
+    print('========================================='
+          '==========================================')
+    print('== ORDER COMPLETE ==')
+    db.checkout_delete(user_id)
 
 
 def main():
