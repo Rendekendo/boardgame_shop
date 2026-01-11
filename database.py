@@ -135,16 +135,20 @@ class Database:
         return result
 
     def create_order(self, user_id, time, cart_data):
+        # get user data
         sql_get = (
             'SELECT first_name, last_name, street, city, postal_code '
             'FROM boardgame_shop.users '
             'WHERE user_id = %s'
         )
+        # send sql command
         self.cursor.execute(sql_get, [user_id])
         user_data = self.cursor.fetchone()
 
-        first_name, last_name, street, city, postal_code = user_data
+        # unpack user_data
+        _, _, street, city, postal_code = user_data
 
+        # save data into orders table
         sql_order = (
             'INSERT INTO orders (user_id, created, ship_street,'
             ' ship_city, ship_postal_code) '
@@ -153,14 +157,17 @@ class Database:
         self.cursor.execute(sql_order, (user_id, time,
                                         street, city, postal_code))
 
+        # get order_no as last row
         order_no = self.cursor.lastrowid
 
+        # contruct sql query
         sql_items = (
             'INSERT INTO order_items (order_no, game_id, '
             'quantity, line_total) '
             'VALUES (%s, %s, %s, %s)'
         )
 
+        # loop through all the games in cart and insert into order_items
         for game_id, quantity, line_total in cart_data:
             self.cursor.execute(
                 sql_items,
@@ -169,6 +176,7 @@ class Database:
 
         self.connection.commit()
 
+        # return user_data and order_no for printing
         return user_data, order_no
 
     def checkout_delete(self, user_id):
@@ -226,6 +234,7 @@ class Database:
         return result, count
 
     def get_genres(self):
+        # return list of genres
         sql_get_genres = 'SELECT g.genre  FROM boardgame_shop.games AS g ' \
                      'GROUP BY g.genre;'
         self.cursor.execute(sql_get_genres)
@@ -234,6 +243,7 @@ class Database:
         return genres
 
     def get_page_count(self, genre):
+        # return number of games of a genre
         game_sql = 'SELECT COUNT(*) FROM boardgame_shop.games WHERE genre = %s'
         game_val = [genre]
         self.cursor.execute(game_sql, game_val)
@@ -242,6 +252,8 @@ class Database:
         return sum_of_games
 
     def get_game_data_browse(self, genre, sec_game_nr):
+        # return game data with pagation
+
         sql = """
         SELECT g.game_id, g.title, g.unit_price
         FROM boardgame_shop.games AS g
@@ -255,6 +267,8 @@ class Database:
         return rows
 
     def valid_game_id(self, answer):
+        # verify if game id is in games table
+
         test_sql = str("SELECT g.* FROM boardgame_shop.games "
                        "AS g WHERE g.game_id = %s;")
         test_id = [answer]

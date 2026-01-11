@@ -500,23 +500,24 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
 
 
 def checkout(db, user_id):
+    # get cart_data
     cart_data = view_cart(db, user_id)
-    if cart_data is False:
+
+    if cart_data is False:  # cart is empty
         return
 
-    while True:
+    while True:  # get user input
         choice = input('Proceed to checkout (Y/N) ?: ')
         choice = choice.lower()
         if choice == 'y':
             break
-        elif choice == 'n':
+        elif choice == 'n':  # no: go back to main menu
             return
         else:
             print('- invalid input')
 
     # create timestamp for database
     time = datetime.now()
-    # inserts order data and returns user data
 
     # inserts cart_data into orders and order_items and returns order no
     user_data, order_no = db.create_order(user_id, time, cart_data)
@@ -534,9 +535,9 @@ def checkout(db, user_id):
 
     # get delivery date
     order_date = time
-    day_delta = timedelta(days=7)
-    delivery_date = order_date + day_delta
-    delivery_date = delivery_date.date()
+    day_delta = timedelta(days=7)  # week
+    delivery_date = order_date + day_delta  # add a week to delivery time
+    delivery_date = delivery_date.date()  # remove time from datetime
 
     print(f'Estimated delivery date: {delivery_date}')
     print('-----------------------------------------'
@@ -546,6 +547,8 @@ def checkout(db, user_id):
     print('========================================='
           '==========================================')
     print('== ORDER COMPLETE ==')
+
+    # send command to delete cart data in db for user_id
     db.checkout_delete(user_id)
 
 
