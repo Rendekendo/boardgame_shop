@@ -4,6 +4,7 @@ from mysql.connector import connect
 import hashlib
 from decimal import Decimal  # needed to parse database data
 import re
+from datetime import datetime, timedelta
 
 
 def check_credentials(username, password):
@@ -204,11 +205,11 @@ def format_cart(lst):
         total = f'{total:.2f}'
 
         # truncate string if title too long
-        if len(title) >= 48:
+        """if len(title) >= 48:
             title = title[:48] + '..'
         result.append(f'{game_id:<10}{title:<50}{'$' + str(unit_price):<10}'
                       f'{quantity:>3}{'$' + str(total):>10}')
-        cart_return.append([game_id, quantity, total])
+        cart_return.append([game_id, quantity, total])"""  #  .......................................................
 
     result.append('-----------------------------------------'
                   '------------------------------------------\n')
@@ -365,7 +366,7 @@ def member_menu(db, email):
             case '3':
                 view_cart(db, user_id)
             case '4':
-                pass
+                checkout(db, user_id)
             case '5':
                 break
 
@@ -466,7 +467,6 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
             # add to cart
             db.add_to_cart(user_id, answer, quantity)
             print('Successfully added to cart.')
-            print('Returning to member menu.')
             browse_by_genre(db, user_id, email, genre, sec_game_nr, page)
         else:
             print('This gameID does not exist. Please try again.')
@@ -485,12 +485,41 @@ def browse_by_genre(db, user_id, email, genre, sec_game_nr=0, page=0):
 
 
 def checkout(db, user_id):
-    user_data = db.add_to_orders(user_id)
-    
+    # create timestamp for database
+    time = datetime.now()
+    # inserts order data and returns user data
+    user_data = db.add_to_orders(user_id, time)
+    cart_data = view_cart(db, user_id)
+    # inserts cart_data into order_items and returns order no
+    order_no, order_data = db.add_to_order_items(user_id, cart_data)
 
-    pass
-    # get user data (name, street & nr, city, postal code)
-    # get time order was submitted order nr
+    # -- Invoice printing --
+    print('========================================='
+          '==========================================')
+    print(f'Invoice for Order Nr. {order_no}')
+    print('========================================='
+          '==========================================')
+    print()
+    print(f'Name: {user_data[0]} {user_data[1]}')
+    print(f'Address: {user_data[2]}')
+    print(f'City: {user_data[4]}, {user_data[3]}')
+
+    # get delivery date
+    order_date = datetime.fromtimestamp(time)
+    day_delta = timedelta(days=7)
+    delivery_date = order_date + day_delta
+    delivery_date.date()
+
+    print(f'Estimated delivery date: {delivery_date}')
+    print('-----------------------------------------'
+          '------------------------------------------')
+
+    # print ordered games
+    ordered_games = db.view_order_items(order_no)
+    formated_games, lst = format_cart(ordered_games)
+
+    for line in formated_games:
+        print(line)
 
 
 def main():
