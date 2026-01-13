@@ -1,4 +1,5 @@
 from mysql.connector import connect
+import re
 
 
 class Database:
@@ -198,11 +199,11 @@ class Database:
                 'SELECT game_id, title, designer, unit_price, '
                 'COUNT(*) OVER () AS total_count '
                 'FROM games '
-                'WHERE title LIKE %s '
+                "WHERE CONCAT(' ', title, ' ') LIKE %s "
                 'LIMIT 3 OFFSET %s'
             )
             # whole word query
-            val = ('%' + query + '%', offset)
+            val = ('% ' + query + ' %', offset)
 
         else:  # designer search
             sql = (
