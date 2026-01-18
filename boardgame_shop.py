@@ -142,9 +142,9 @@ def search(db, user_id, search_type, query):
                     # check if quantity is valid
                     try:
                         quantity = int(quantity)
-                        if quantity > 2147483647:
-                            print('What are you doing?!')
-                        elif 0 < quantity < 2147483647:
+                        if quantity > 100:
+                            print('When don\nt have that many')
+                        elif 0 < quantity < 100:
                             break
                         else:
                             print('- quantity must be a positive integer')
