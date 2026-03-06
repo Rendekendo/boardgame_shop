@@ -94,28 +94,6 @@ Total = $100.00
 4. The system creates an order in the database and prints an invoice.
 5. Cart data is cleared after successful checkout.
 
-## Installation
-
-1. Clone the repository
-
-```bash
-git clone https://github.com/yourusername/boardgame-shop.git
-cd boardgame-shop
-```
-
-2. Install required Python packages
-
-```bash
-pip install mysql-connector-python
-```
-
-3. Ensure MySQL server is running and database `boardgame_shop` exists.
-4. Run the application
-
-```bash
-python main.py
-```
-
 ## Database
 
 - **Users table** – stores user information and hashed passwords
